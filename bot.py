@@ -2,8 +2,8 @@ import discord
 from openai import OpenAI
 
 # 🔑 PUT YOUR KEYS HERE
-DISCORD_TOKEN = os.gentenv("DISCORD_TOKEN")
-OPENAI_API_KEY = os.gentenv("OPENAI_API_KEY")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # 🧠 OpenAI client
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
