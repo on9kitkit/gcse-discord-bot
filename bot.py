@@ -120,7 +120,16 @@ async def on_message(message):
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"Create a GCSE quiz (3 questions + answers) on: {topic}")
+                reply = ask_ai(f"""
+                The student asked: {topic}
+
+                Create a GCSE quiz based on their request.
+
+                Rules:
+                - Adapt to their request (e.g. MC, long questions, number of questions)
+                - If unclear, default to mixed questions
+                - Do NOT show answers until the end
+                """)
 
             xp = add_xp(message.author.id, 5)
             level = xp // 100
