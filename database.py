@@ -74,3 +74,7 @@ def update_stats(user_id, subject):
     """, (user_id, total, bio, phy, eng))
 
     conn.commit()
+
+def get_user_stats(user_id):
+    cursor.execute("SELECT * FROM user_stats WHERE user_id=?", (user_id,))
+    return cursor.fetchone()
