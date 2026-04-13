@@ -1,4 +1,4 @@
-from database import add_xp, get_leaderboard, update_stats
+from database import add_xp, get_leaderboard, update_stats, get_user_stats
 import time
 last_used = {}
 import os
@@ -138,7 +138,27 @@ async def on_message(message):
             update_stats(message.author.id, "bio")
             topic = content[4:]
             async with message.channel.typing():
-                reply = ask_ai(topic, system_prompt="You are a GCSE Biology expert.")
+                data = get_user_stats(message.author.id)
+
+                memory = ""
+                if data:
+                bio_count = data[2]
+                phy_count = data[3]
+                eng_count = data[4]
+
+    # detect weakest subject
+                weakest = min(
+                    [("Biology", bio_count), ("Physics", phy_count), ("English", eng_count)],
+                    key=lambda x: x[1]
+                )[0]
+
+                memory = f"This student struggles most with {weakest}. Explain more clearly and simply."
+
+            async with message.channel.typing():
+                reply = ask_ai(
+                    f"{memory}\n\nExplain this topic:\n{topic}",
+                    system_prompt="You are a GCSE Biology expert."
+                )
 
         # ⚡ PHY
         elif content.startswith("!phy"):
