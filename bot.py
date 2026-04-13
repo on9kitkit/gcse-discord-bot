@@ -21,7 +21,6 @@ client = discord.Client(intents=intents)
 def ask_ai(prompt, system_prompt=None):
     if system_prompt is None:
         system_prompt = """You are an expert AQA GCSE tutor AND examiner.
-
 ALWAYS:
 - Use bullet points
 - Include key terms (important for marks)
@@ -35,6 +34,25 @@ IF marking:
 - Show how to improve to next grade
 
 Keep answers concise but high quality. No waffle."""
+
+def create_embed(title, description, color, message):
+    embed = discord.Embed(
+        title=title,
+        description=description[:4000],
+        color=color
+    )
+
+    embed.set_footer(text=f"Requested by {message.author.name}")
+
+    if message.author.avatar:
+        embed.set_thumbnail(url=message.author.avatar.url)
+
+    return embed
+
+
+async def send_embed(message, title, content, color=0x00ffcc):
+    embed = create_embed(title, content, color, message)
+    await message.channel.send(embed=embed)
 
     response = client_ai.chat.completions.create(
         model="gpt-4o-mini",
@@ -166,7 +184,7 @@ async def on_message(message):
         # ⚡ PHY
         elif content.startswith("!phy"):
             update_stats(message.author.id, "phy")
-            topic = content[4:],strip()
+            topic = content[4:].strip()
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are a GCSE Physics expert.")
 
@@ -218,8 +236,7 @@ async def on_message(message):
             return
 
         # 📤 SEND RESPONSE (shared logic)
-        for i in range(0, len(reply), 1900):
-            await message.channel.send(reply[i:i+1900])
+        await send_embed(message, "📚 AI Response", reply)
 
     except Exception as e:
         import traceback
