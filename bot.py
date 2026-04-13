@@ -1,4 +1,4 @@
-from database import add_xp, get_leaderboard
+from database import add_xp, get_leaderboard, update_stats
 import time
 last_used = {}
 import os
@@ -135,18 +135,21 @@ async def on_message(message):
 
         # 🧬 BIO
         elif content.startswith("!bio"):
+            update_stats(message.author.id, "bio")
             topic = content[4:]
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are a GCSE Biology expert.")
 
         # ⚡ PHY
         elif content.startswith("!phy"):
+            update_stats(message.author.id, "phy")
             topic = content[4:]
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are a GCSE Physics expert.")
 
         # 📖 ENG
         elif content.startswith("!eng"):
+            update_stats(message.author.id, "eng")
             topic = content[4:]
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
@@ -166,6 +169,29 @@ async def on_message(message):
 
             await message.channel.send(leaderboard)
             return
+
+        elif content.startswith("!profile"):
+            cursor.execute("SELECT * FROM user_stats WHERE user_id=?", (message.author.id,))
+            data = cursor.fetchone()
+
+            if data is None:
+                await message.channel.send("📊 No data yet. Start studying!")
+                return
+
+            total = data[1]
+            bio = data[2]
+            phy = data[3]
+            eng = data[4]
+
+            await message.channel.send(f"""
+        📊 **Your Study Profile**
+
+        Total answers: {total}
+
+        🧬 Biology: {bio}
+        ⚡ Physics: {phy}
+        📖 English: {eng}
+        """)
 
         else:
             return
