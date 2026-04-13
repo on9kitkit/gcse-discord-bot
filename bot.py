@@ -18,23 +18,33 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # 🤖 AI function
+
+# 🤖 AI function
 def ask_ai(prompt, system_prompt=None):
     if system_prompt is None:
         system_prompt = """You are an expert AQA GCSE tutor AND examiner.
+
 ALWAYS:
 - Use bullet points
-- Include key terms (important for marks)
+- Include key terms
 - Give clear explanations
-- Add an example when possible
-- Include exam tips (how to get Grade 7-9)
+- Add an example
+- Include exam tips
 
-IF marking:
-- Give a grade (1-9)
-- Explain WHY
-- Show how to improve to next grade
+Keep answers concise but high quality."""
 
-Keep answers concise but high quality. No waffle."""
+    response = client_ai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    )
 
+    return response.choices[0].message.content
+
+
+# 🎨 Embed UI
 def create_embed(title, description, color, message):
     embed = discord.Embed(
         title=title,
@@ -53,16 +63,6 @@ def create_embed(title, description, color, message):
 async def send_embed(message, title, content, color=0x00ffcc):
     embed = create_embed(title, content, color, message)
     await message.channel.send(embed=embed)
-
-    response = client_ai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content
-
 
 # 💬 Discord message handler
 @client.event
@@ -99,10 +99,12 @@ async def on_message(message):
     last_used[user_id] = now
 
     try:
+        reply = None
+        title = "🤖 AI Response"
         # 🧠 AI EXPLAIN
         if content.startswith("!ai"):
-            question = content[4:]
-            if not question.strip():
+            question = content[4:].strip()
+            if not question:
                 await message.channel.send("❗ Please enter a question.")
                 return
 
@@ -111,8 +113,9 @@ async def on_message(message):
 
         # ❓ QUIZ
         elif content.startswith("!quiz"):
-            topic = content[6:]
-            if not topic.strip():
+            title = "❓ Quiz Time"
+            topic = content[6:].strip()
+            if not topic:
                 await message.channel.send("❗ Please enter a topic.")
                 return
 
@@ -125,8 +128,9 @@ async def on_message(message):
 
         # 🧪 MARK
         elif content.startswith("!mark"):
-            answer = content[6:]
-            if not answer.strip():
+            title = "📝 Exam Feedback"
+            answer = content[6:].strip()
+            if not answer:
                 await message.channel.send("❗ Please enter an answer.")
                 return
 
@@ -139,8 +143,9 @@ async def on_message(message):
 
         # ✍️ IMPROVE
         elif content.startswith("!improve"):
-            text = content[9:]
-            if not text.strip():
+            title = "📝 Improvement"
+            text = content[9:].strip()
+            if not text:
                 await message.channel.send("❗ Please enter text.")
                 return
 
@@ -153,6 +158,7 @@ async def on_message(message):
 
         # 🧬 BIO
         elif content.startswith("!bio"):
+            title = "🧬 Biology Help"
             update_stats(message.author.id, "bio")
             topic = content[4:].strip()
 
@@ -183,6 +189,7 @@ async def on_message(message):
 
         # ⚡ PHY
         elif content.startswith("!phy"):
+            title = "⚡️ Physics Help"
             update_stats(message.author.id, "phy")
             topic = content[4:].strip()
             async with message.channel.typing():
@@ -190,6 +197,7 @@ async def on_message(message):
 
         # 📖 ENG
         elif content.startswith("!eng"):
+            title = "📚 English Help"
             update_stats(message.author.id, "eng")
             topic = content[4:].strip()
             async with message.channel.typing():
@@ -236,7 +244,9 @@ async def on_message(message):
             return
 
         # 📤 SEND RESPONSE (shared logic)
-        await send_embed(message, "📚 AI Response", reply)
+        if not reply:
+            return
+        await send_embed(message, title, reply)
 
     except Exception as e:
         import traceback
