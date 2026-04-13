@@ -136,17 +136,20 @@ async def on_message(message):
         # 🧬 BIO
         elif content.startswith("!bio"):
             update_stats(message.author.id, "bio")
-            topic = content[4:]
-            async with message.channel.typing():
-                data = get_user_stats(message.author.id)
+            topic = content[4:].strip()
 
-                memory = ""
-                if data:
+            if not topic.strip():
+                await message.channel.send("❗ Please enter a topic.")
+                return
+
+            data = get_user_stats(message.author.id)
+
+            memory = ""
+            if data:
                 bio_count = data[2]
                 phy_count = data[3]
                 eng_count = data[4]
 
-    # detect weakest subject
                 weakest = min(
                     [("Biology", bio_count), ("Physics", phy_count), ("English", eng_count)],
                     key=lambda x: x[1]
@@ -163,14 +166,14 @@ async def on_message(message):
         # ⚡ PHY
         elif content.startswith("!phy"):
             update_stats(message.author.id, "phy")
-            topic = content[4:]
+            topic = content[4:],strip()
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are a GCSE Physics expert.")
 
         # 📖 ENG
         elif content.startswith("!eng"):
             update_stats(message.author.id, "eng")
-            topic = content[4:]
+            topic = content[4:].strip()
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
 
@@ -191,8 +194,7 @@ async def on_message(message):
             return
 
         elif content.startswith("!profile"):
-            cursor.execute("SELECT * FROM user_stats WHERE user_id=?", (message.author.id,))
-            data = cursor.fetchone()
+            data = get_user_stats(message.author.id)
 
             if data is None:
                 await message.channel.send("📊 No data yet. Start studying!")
@@ -212,7 +214,6 @@ async def on_message(message):
         ⚡ Physics: {phy}
         📖 English: {eng}
         """)
-
         else:
             return
 
