@@ -156,7 +156,7 @@ async def on_message(message):
             update_stats(message.author.id, "bio")
             topic = content[4:].strip()
 
-            if not topic.strip():
+            if not topic:
                 await message.channel.send("❗ Please enter a topic.")
                 return
 
