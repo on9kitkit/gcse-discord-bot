@@ -1,17 +1,9 @@
+from database import add_xp, get_leaderboard
 import time
 last_used = {}
 import os
 import discord
 from openai import OpenAI
-user_xp = {}
-
-#XP system
-def add_xp(user_id, amount):
-    if user_id not in user_xp:
-        user_xp[user_id] = 0
-
-    user_xp[user_id] += amount
-    return user_xp[user_id]
 
 # 🔑 Environment variables
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -57,23 +49,14 @@ Keep answers concise but high quality. No waffle."""
 # 💬 Discord message handler
 @client.event
 async def on_message(message):
-    user_id = message.author.id
-    now = time.time()
-
-    if user_id in last_used and now - last_used[user_id] < 3:
-        await message.channel.send("⏳ Slow down bro...")
-        return
-
-    last_used[user_id] = now
     if message.author == client.user:
         return
 
-    try:
-        content = message.content
+    content = message.content
 
-        # 📘 HELP COMMAND
-        if content.startswith("!help"):
-            await message.channel.send("""
+    # 📘 HELP COMMAND
+    if content.startswith("!help"):
+        await message.channel.send("""
 🤖 **GCSE AI Bot Commands**
 
 !ai <question> → explain anything  
@@ -85,102 +68,111 @@ async def on_message(message):
 
 🔥 Tip: Be specific for better answers!
 """)
+        return
 
+    # ⏳ COOLDOWN (must stay inside function)
+    user_id = message.author.id
+    now = time.time()
+
+    if user_id in last_used and now - last_used[user_id] < 3:
+        await message.channel.send("⏳ Slow down bro...")
+        return
+
+    last_used[user_id] = now
+
+    try:
         # 🧠 AI EXPLAIN
-        elif content.startswith("!ai"):
+        if content.startswith("!ai"):
             question = content[4:]
             if not question.strip():
                 await message.channel.send("❗ Please enter a question.")
                 return
+
             async with message.channel.typing():
                 reply = ask_ai(question)
-
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
 
         # ❓ QUIZ
         elif content.startswith("!quiz"):
             topic = content[6:]
+            if not topic.strip():
+                await message.channel.send("❗ Please enter a topic.")
+                return
+
             async with message.channel.typing():
                 reply = ask_ai(f"Create a GCSE quiz (3 questions + answers) on: {topic}")
+
             xp = add_xp(message.author.id, 5)
             level = xp // 100
             await message.channel.send(f"✨ +5 XP | Total: {xp} | Level: {level}")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # 🧪 MARK ANSWER
+        # 🧪 MARK
         elif content.startswith("!mark"):
             answer = content[6:]
+            if not answer.strip():
+                await message.channel.send("❗ Please enter an answer.")
+                return
+
             async with message.channel.typing():
-                reply = ask_ai(f"Mark this GCSE answer. Give a grade (1-9), feedback, and how to improve:\n{answer}")
+                reply = ask_ai(f"Mark this GCSE answer:\n{answer}")
+
             xp = add_xp(message.author.id, 20)
             level = xp // 100
             await message.channel.send(f"✨ +20 XP | Total: {xp} | Level: {level}")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # ✍️ IMPROVE WRITING
+        # ✍️ IMPROVE
         elif content.startswith("!improve"):
             text = content[9:]
+            if not text.strip():
+                await message.channel.send("❗ Please enter text.")
+                return
+
             async with message.channel.typing():
-                reply = ask_ai(f"Improve this to Grade 9 GCSE standard:\n{text}")
+                reply = ask_ai(f"Improve this to Grade 9:\n{text}")
+
             xp = add_xp(message.author.id, 15)
             level = xp // 100
-            await message.channel.send(f"✨ +15 XP | Total: {xp}")
+            await message.channel.send(f"✨ +15 XP | Total: {xp} | Level: {level}")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # 🧬 BIOLOGY MODE
+        # 🧬 BIO
         elif content.startswith("!bio"):
             topic = content[4:]
             async with message.channel.typing():
-                reply = ask_ai(topic,
-                system_prompt="You are a GCSE Biology expert. Explain clearly with examples and exam tips."
-            )
+                reply = ask_ai(topic, system_prompt="You are a GCSE Biology expert.")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # ⚡ PHYSICS MODE
+        # ⚡ PHY
         elif content.startswith("!phy"):
             topic = content[4:]
             async with message.channel.typing():
-                reply = ask_ai( topic,
-                system_prompt="You are a GCSE Physics expert. Explain step-by-step with formulas and examples.")
+                reply = ask_ai(topic, system_prompt="You are a GCSE Physics expert.")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # 📖 ENGLISH MODE
+        # 📖 ENG
         elif content.startswith("!eng"):
             topic = content[4:]
             async with message.channel.typing():
-                reply = ask_ai(topic,
-                system_prompt="You are an AQA English examiner. Give analysis, techniques, and Grade 9 insights.")
+                reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
-        # 💬 CHAT MODE (@bot)
+        # 💬 CHAT
         elif client.user in message.mentions:
-            question = content
-            reply = ask_ai(question)
+            async with message.channel.typing():
+                reply = ask_ai(content)
 
-            for i in range(0, len(reply), 1900):
-                await message.channel.send(reply[i:i+1900])
-
+        # 🏆 LEADERBOARD
         elif content.startswith("!leaderboard"):
-            sorted_users = sorted(user_xp.items(), key=lambda x: x[1], reverse=True)
+            top_users = get_leaderboard()
 
-            leaderboard = "🏆 **Leaderboard**\n"
-            for i, (user, xp) in enumerate(sorted_users[:5]):
+            leaderboard = "🏆 **Top Students**\n\n"
+            for i, (user, xp) in enumerate(top_users):
                 leaderboard += f"{i+1}. <@{user}> — {xp} XP\n"
 
             await message.channel.send(leaderboard)
+            return
+
+        else:
+            return
+
+        # 📤 SEND RESPONSE (shared logic)
+        for i in range(0, len(reply), 1900):
+            await message.channel.send(reply[i:i+1900])
 
     except Exception as e:
         print("ERROR:", e)
