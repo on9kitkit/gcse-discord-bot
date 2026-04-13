@@ -128,7 +128,7 @@ async def on_message(message):
                 Rules:
                 - Adapt to their request (e.g. MC, long questions, number of questions)
                 - If unclear, default to mixed questions
-                - Do NOT show answers until the end
+                - Only show the answers at the end
                 """)
 
             xp = add_xp(message.author.id, 5)
