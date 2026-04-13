@@ -175,7 +175,8 @@ async def on_message(message):
             await message.channel.send(reply[i:i+1900])
 
     except Exception as e:
-        print("ERROR:", e)
+        import traceback
+        traceback.print_exc()
 
 
 # 🚀 Run bot
