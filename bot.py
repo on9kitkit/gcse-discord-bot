@@ -183,6 +183,7 @@ async def on_message(message):
                 {answer}
 
                 - Give a grade (1–9)
+                - Give an estimated mark
                 - Explain why
                 - Show how to improve
                 """)
@@ -202,9 +203,9 @@ async def on_message(message):
             async with message.channel.typing():
                 reply = ask_ai(f"Improve this to Grade 9:\n{text}")
 
-            xp = add_xp(message.author.id, 15)
+            xp = add_xp(message.author.id, 5)
             level = xp // 100
-            await message.channel.send(f"✨ +15 XP | Total: {xp} | Level: {level}")
+            await message.channel.send(f"✨ +5 XP | Total: {xp} | Level: {level}")
 
         # 🧬 BIO
         elif content.startswith("!bio"):
