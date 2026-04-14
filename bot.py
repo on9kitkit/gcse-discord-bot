@@ -30,6 +30,11 @@ ALWAYS:
 - Give clear explanations
 - Add an example
 - Include exam tips
+WHEN USING EQUATIONS:
+- Do NOT use LaTeX (no \cdot, \sin, etc.)
+- Use simple GCSE notation (e.g. F = BIL, v = fλ)
+- Keep equations clean and readable in plain text
+- Use standard symbols like θ instead of \theta
 
 Keep answers concise but high quality."""
 
