@@ -149,7 +149,7 @@ async def on_message(message):
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"Mark this GCSE answer:\n{answer}")
+                reply = ask_ai(f"Mark this GCSE answer, give it an estimated marks out of the question type:\n{answer}")
 
             xp = add_xp(message.author.id, 20)
             level = xp // 100
