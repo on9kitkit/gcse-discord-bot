@@ -65,6 +65,20 @@ def create_embed(title, description, color, message):
     return embed
 
 
+async def get_context(message, limit=5):
+    messages = []
+
+    async for msg in message.channel.history(limit=limit):
+        if (
+            msg.author != client.user
+            and msg.content.strip()
+            and not msg.content.startswith("!")
+        ):
+            messages.append(msg.content)
+
+    messages.reverse()
+    return "\n".join(messages)
+
 async def send_embed(message, title, content, color=0x00ffcc):
     embed = create_embed(title, content, color, message)
     await message.channel.send(embed=embed)
@@ -114,7 +128,17 @@ async def on_message(message):
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(question)
+                context = await get_context(message)
+
+                reply = ask_ai(f"""
+                Recent conversation:
+                {context}
+
+                User request:
+                {question}
+                
+                Explain clearly.
+                """)
 
         # ❓ QUIZ
         elif content.startswith("!quiz"):
@@ -149,7 +173,19 @@ async def on_message(message):
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"Mark this GCSE answer, give it an estimated marks out of the question type:\n{answer}")
+                context = await get_context(message)
+
+                reply = ask_ai(f"""
+                Recent conversation:
+                {context}
+
+                Mark this GCSE answer:
+                {answer}
+
+                - Give a grade (1–9)
+                - Explain why
+                - Show how to improve
+                """)
 
             xp = add_xp(message.author.id, 20)
             level = xp // 100
