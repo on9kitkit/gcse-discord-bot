@@ -254,6 +254,12 @@ async def on_message(message):
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
 
+        elif content.startswith("!his"):
+            title = "🦖 History Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(topic, system_prompt="You are an AQA Histroy expert.")
+
         # 💬 CHAT
         elif client.user in message.mentions:
             async with message.channel.typing():
