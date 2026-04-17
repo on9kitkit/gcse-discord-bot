@@ -43,16 +43,16 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
 
         Keep answers concise but high quality."""
 
-    response = client_ai.chat.completions.create(
+    response = client_ai.response.create(
         model=model,
-        max_tokens=2000,
-        messages=[
+        input=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        max_output_tokens=2000
     )
 
-    return response.choices[0].message.content
+    return response.output_text
 
 
 # 🎨 Embed UI
@@ -332,7 +332,8 @@ async def on_message(message):
 
         # 📤 SEND RESPONSE (shared logic)
         if not reply:
-            return
+            reply = "⚠️ AI returned no response. Try again."
+        print("DEBUG REPLY:", reply)
         await send_embed(message, title, reply)
 
     except Exception as e:
