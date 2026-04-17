@@ -52,7 +52,10 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
         max_output_tokens=2000
     )
 
-    return response.output_text
+    try:
+        return response.output[0].content[0].text
+    except:
+        return "⚠️ AI failed to generate a response."
 
 
 # 🎨 Embed UI
