@@ -27,7 +27,7 @@ client = discord.Client(intents=intents)
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
     if system_prompt is None:
         system_prompt = r"""You are an expert AQA GCSE tutor...
-        - Do NOT use LaTeX (no \\cdot, \sin, etc.)
+        - Do NOT use LaTeX (no \\cdot, \\sin, etc.)
 
         ALWAYS:
         - Use bullet points
@@ -43,7 +43,7 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
 
         Keep answers concise but high quality."""
 
-    response = client_ai.response.create(
+    response = client_ai.responses.create(
         model=model,
         input=[
             {"role": "system", "content": system_prompt},
