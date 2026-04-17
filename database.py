@@ -13,6 +13,15 @@ CREATE TABLE IF NOT EXISTS users (
 """)
 
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS weak_topics (
+    user_id INTEGER,
+    topic TEXT,
+    count INTEGER,
+    PRIMARY KEY (user_id, topic)
+)
+""")
+
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS user_stats (
     user_id INTEGER PRIMARY KEY,
     total_answers INTEGER,
