@@ -148,7 +148,7 @@ async def on_message(message):
             weak_topics = get_weak_topics(message.author.id)
 
             memory = ""
-            if weak_topics:
+            if weak_topics and ("weak" in topic.lower() or "improve" in topic.lower()):
                 weakest_topic = weak_topics[0][0]
                 memory = f"This student struggles with {weakest_topic}. Focus the quiz on this topic."
             else:
