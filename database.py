@@ -1,7 +1,7 @@
 import sqlite3
 
 # 🔌 Connect database FIRST
-conn = sqlite3.connect("data.db")
+conn = sqlite3.connect("data.db", check_same_thread=False)
 cursor = conn.cursor()
 
 # 🧱 Create tables
