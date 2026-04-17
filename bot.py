@@ -40,6 +40,7 @@ Keep answers concise but high quality."""
 
     response = client_ai.chat.completions.create(
         model=model,
+        max_tokens=2000,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
@@ -157,7 +158,7 @@ async def on_message(message):
                 Rules:
                 - Adapt to their request (e.g. MC, long questions, number of questions)
                 - If unclear, default to mixed questions
-                - Only show all the answers at the end
+                - Do not show the answers
                 """)
 
             xp = add_xp(message.author.id, 5)
