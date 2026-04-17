@@ -7,7 +7,7 @@ from openai import OpenAI
 # ⏱️ cooldown
 last_used = {}
 
-# 🔑 ENV
+# 🔑 ENV VARIABLES
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -27,40 +27,48 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-# 🤖 AI FUNCTION
-def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
-    if system_prompt is None:
-        system_prompt = r"""You are an expert AQA GCSE tutor...
 
-ALWAYS:
+# 🤖 AI FUNCTION (SAFE VERSION)
+def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
+    try:
+        if system_prompt is None:
+            system_prompt = """You are an expert AQA GCSE tutor.
+
 - Use bullet points
 - Include key terms
 - Give clear explanations
 - Add an example
 - Include exam tips
+- Use simple equations like F = ma (NO LaTeX)
 """
 
-    response = client_ai.responses.create(
-        model=model,
-        input=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        max_output_tokens=2000
-    )
+        response = client_ai.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            max_output_tokens=1500
+        )
 
-    try:
+        # ✅ SAFE extraction (no more empty replies)
+        if hasattr(response, "output_text") and response.output_text:
+            return response.output_text
+
+        # fallback
         return response.output[0].content[0].text
-    except:
-        print("RAW RESPONSE:", response)
-        return None
 
-# 🎨 EMBED
-def create_embed(title, description, color, message):
+    except Exception as e:
+        print("❌ AI ERROR:", e)
+        return "⚠️ AI failed. Try again."
+
+
+# 🎨 EMBED UI
+def create_embed(title, description, message):
     embed = discord.Embed(
         title=title,
         description=description[:4000],
-        color=color
+        color=0x00ffcc
     )
 
     embed.set_footer(text=f"Requested by {message.author.name}")
@@ -72,7 +80,7 @@ def create_embed(title, description, color, message):
 
 
 async def send_embed(message, title, content):
-    embed = create_embed(title, content, 0x00ffcc, message)
+    embed = create_embed(title, content, message)
     await message.channel.send(embed=embed)
 
 
@@ -94,6 +102,7 @@ async def on_message(message):
 !mark <answer>
 !improve <text>
 !bio / !phy / !eng
+!leaderboard
 """)
         return
 
@@ -145,7 +154,7 @@ Create a GCSE quiz.
 User request: {topic}
 
 Rules:
-- Mix question types (1–6 markers)
+- Mix 1–6 mark questions
 - Include exam-style questions
 - DO NOT include answers
 """)
@@ -155,7 +164,7 @@ Rules:
 
         # 🧪 MARK
         elif content.startswith("!mark"):
-            title = "📝 Feedback"
+            title = "📝 Exam Feedback"
             answer = content[6:].strip()
 
             if not answer:
@@ -230,7 +239,7 @@ Feedback: ...
 
         # SEND
         if not reply:
-            reply = "⚠️ No response."
+            reply = "⚠️ No response from AI."
 
         print("DEBUG:", reply[:100])
         await send_embed(message, title, reply)
@@ -240,5 +249,5 @@ Feedback: ...
         traceback.print_exc()
 
 
-# 🚀 RUN
+# 🚀 RUN BOT
 client.run(DISCORD_TOKEN)
