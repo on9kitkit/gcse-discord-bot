@@ -27,21 +27,20 @@ def ask_ai(prompt, system_prompt=None, model="gpt-5.1"):
     if system_prompt is None:
         system_prompt = r"""You are an expert AQA GCSE tutor...
         - Do NOT use LaTeX (no \cdot, \sin, etc.)
-        """
 
-ALWAYS:
-- Use bullet points
-- Include key terms
-- Give clear explanations
-- Add an example
-- Include exam tips
-WHEN USING EQUATIONS:
-- Do NOT use LaTeX (no \cdot, \sin, etc.)
-- Use simple GCSE notation (e.g. F = BIL, v = fλ)
-- Keep equations clean and readable in plain text
-- Use standard symbols like θ instead of \theta
+        ALWAYS:
+        - Use bullet points
+        - Include key terms
+        - Give clear explanations
+        - Add an example
+        - Include exam tips
+        WHEN USING EQUATIONS:
+        - Do NOT use LaTeX (no \cdot, \sin, etc.)
+        - Use simple GCSE notation (e.g. F = BIL, v = fλ)
+        - Keep equations clean and readable in plain text
+        - Use standard symbols like θ instead of \theta
 
-Keep answers concise but high quality."""
+        Keep answers concise but high quality."""
 
     response = client_ai.chat.completions.create(
         model=model,
