@@ -1,17 +1,23 @@
 from database import add_xp, get_leaderboard, update_stats, get_user_stats, get_weak_topics, update_topic
 import time
-last_used = {}
 import os
 import discord
 from openai import OpenAI
 
-# 🔑 Environment variables
+# ⏱️ cooldown
+last_used = {}
+
+# 🔑 ENV
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not DISCORD_TOKEN:
+    raise ValueError("❌ DISCORD_TOKEN missing")
+
 if not OPENAI_API_KEY:
-    raise ValueError("❌ OPENAI_API_KEY is missing")
-print("API KEY LOADED:", OPENAI_API_KEY[:10] if OPENAI_API_KEY else "NONE")
+    raise ValueError("❌ OPENAI_API_KEY missing")
+
+print("✅ API KEY LOADED:", OPENAI_API_KEY[:10])
 
 # 🧠 OpenAI client
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
@@ -21,44 +27,43 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-# 🤖 AI function
-
-# 🤖 AI function
+# 🤖 AI FUNCTION
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
-    if system_prompt is None:
-        system_prompt = r"""You are an expert AQA GCSE tutor...
-        - Do NOT use LaTeX (no \\cdot, \\sin, etc.)
-
-        ALWAYS:
-        - Use bullet points
-        - Include key terms
-        - Give clear explanations
-        - Add an example
-        - Include exam tips
-        WHEN USING EQUATIONS:
-        - Do NOT use LaTeX (no \cdot, \sin, etc.)
-        - Use simple GCSE notation (e.g. F = BIL, v = fλ)
-        - Keep equations clean and readable in plain text
-        - Use standard symbols like θ instead of \theta
-
-        Keep answers concise but high quality."""
-
-    response = client_ai.responses.create(
-        model=model,
-        input=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        max_output_tokens=2000
-    )
-
     try:
-        return response.output[0].content[0].text
-    except:
-        return "⚠️ AI failed to generate a response."
+        if system_prompt is None:
+            system_prompt = """You are an expert AQA GCSE tutor.
+
+ALWAYS:
+- Use bullet points
+- Include key terms
+- Give clear explanations
+- Add an example
+- Include exam tips
+
+Use clean GCSE equations (NO LaTeX)."""
+
+        response = client_ai.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            max_output_tokens=1500
+        )
+
+        text = response.output_text
+
+        if not text:
+            return "⚠️ AI returned empty response."
+
+        return text
+
+    except Exception as e:
+        print("❌ AI ERROR:", e)
+        return "⚠️ AI error occurred. Try again."
 
 
-# 🎨 Embed UI
+# 🎨 EMBED
 def create_embed(title, description, color, message):
     embed = discord.Embed(
         title=title,
@@ -74,54 +79,38 @@ def create_embed(title, description, color, message):
     return embed
 
 
-async def get_context(message, limit=5):
-    messages = []
-
-    async for msg in message.channel.history(limit=limit):
-        if (
-            msg.author != client.user
-            and msg.content.strip()
-            and not msg.content.startswith("!")
-        ):
-            messages.append(msg.content)
-
-    messages.reverse()
-    return "\n".join(messages)
-
-async def send_embed(message, title, content, color=0x00ffcc):
-    embed = create_embed(title, content, color, message)
+async def send_embed(message, title, content):
+    embed = create_embed(title, content, 0x00ffcc, message)
     await message.channel.send(embed=embed)
 
-# 💬 Discord message handler
+
+# 💬 MESSAGE HANDLER
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
 
-    content = message.content
+    content = message.content.strip()
 
-    # 📘 HELP COMMAND
+    # HELP
     if content.startswith("!help"):
         await message.channel.send("""
-🤖 **GCSE AI Bot Commands**
+🤖 **GCSE AI Bot**
 
-!ai <question> → explain anything  
-!quiz <topic> → GCSE quiz  
-!mark <answer> → get graded (1–9)  
-!improve <text> → upgrade to Grade 9  
-!bio / !phy / !eng → subject modes  
-@bot → chat naturally  
-
-🔥 Tip: Be specific for better answers!
+!ai <question>
+!quiz <topic>
+!mark <answer>
+!improve <text>
+!bio / !phy / !eng
 """)
         return
 
-    # ⏳ COOLDOWN (must stay inside function)
+    # ⏳ cooldown
     user_id = message.author.id
     now = time.time()
 
-    if user_id in last_used and now - last_used[user_id] < 3:
-        await message.channel.send("⏳ Slow down bro...")
+    if user_id in last_used and now - last_used[user_id] < 2:
+        await message.channel.send("⏳ Slow down...")
         return
 
     last_used[user_id] = now
@@ -129,214 +118,129 @@ async def on_message(message):
     try:
         reply = None
         title = "🤖 AI Response"
-        # 🧠 AI EXPLAIN
+
+        # 🧠 AI
         if content.startswith("!ai"):
             question = content[4:].strip()
             if not question:
-                await message.channel.send("❗ Please enter a question.")
+                await message.channel.send("❗ Enter a question.")
                 return
 
             async with message.channel.typing():
-                context = await get_context(message)
-
-                reply = ask_ai(f"""
-                Recent conversation:
-                {context}
-
-                User request:
-                {question}
-                
-                Explain clearly.
-                """)
+                reply = ask_ai(question)
 
         # ❓ QUIZ
         elif content.startswith("!quiz"):
             title = "❓ Quiz Time"
             topic = content[6:].strip()
-            weak_topics = get_weak_topics(message.author.id)
+
+            if not topic:
+                await message.channel.send("❗ Enter a topic.")
+                return
+
+            weak_topics = get_weak_topics(user_id)
 
             memory = ""
             if weak_topics and ("weak" in topic.lower() or "improve" in topic.lower()):
-                weakest_topic = weak_topics[0][0]
-                memory = f"This student struggles with {weakest_topic}. Focus the quiz on this topic."
-            else:
-                memory = ""
-            if not topic:
-                await message.channel.send("❗ Please enter a topic.")
-                return
+                memory = f"Focus on weak topic: {weak_topics[0][0]}"
 
             async with message.channel.typing():
                 reply = ask_ai(f"""
-                {memory}
-                The student asked: {topic}
+{memory}
 
-                Create a GCSE quiz based on their request.
+Create a GCSE quiz.
 
-                Rules:
-                - Adapt to their request (e.g. MC, long questions, number of questions)
-                - If unclear, default to mixed questions
-                - Do not show the answers
-                """)
+User request: {topic}
 
-            xp = add_xp(message.author.id, 5)
-            level = xp // 100
-            await message.channel.send(f"✨ +5 XP | Total: {xp} | Level: {level}")
+Rules:
+- Mix question types (1–6 markers)
+- Include exam-style questions
+- DO NOT include answers
+""")
+
+            xp = add_xp(user_id, 5)
+            await message.channel.send(f"✨ +5 XP | Total: {xp}")
 
         # 🧪 MARK
         elif content.startswith("!mark"):
-            title = "📝 Exam Feedback"
+            title = "📝 Feedback"
             answer = content[6:].strip()
+
             if not answer:
-                await message.channel.send("❗ Please enter an answer.")
+                await message.channel.send("❗ Enter answer.")
                 return
 
             async with message.channel.typing():
-                context = await get_context(message)
-
                 reply = ask_ai(f"""
-                Recent conversation:
-                {context}
+Mark this GCSE answer:
 
-                Mark this GCSE answer:
-                {answer}
+{answer}
 
-                - Give a grade (1–9)
-                - Give an estimated mark
-                - Explain why
-                - Show how to improve
-                Also:
-                - Identify the topic this answer is about (e.g. forces, EM waves, structure in English)
-                - Identify ONE weakness in the answer
-                Format:
-                Topic: ...
-                Weakness: ...
-                Grade: ...
-                Feedback: ...
-                """)
-                lines = reply.split("\n")
+Give:
+- Grade (1–9)
+- Feedback
+- Topic
+- Weakness
 
-                topic_line = next((l for l in lines if l.lower().startswith("topic:")), None)
+Format:
+Topic: ...
+Weakness: ...
+Grade: ...
+Feedback: ...
+""")
 
-                if topic_line:
-                    topic_name = topic_line.split(":")[-1].strip()
-                    update_topic(message.author.id, topic_name)
+                # store weak topic
+                for line in reply.split("\n"):
+                    if line.lower().startswith("topic:"):
+                        topic_name = line.split(":")[-1].strip()
+                        update_topic(user_id, topic_name)
 
-            xp = add_xp(message.author.id, 20)
-            level = xp // 100
-            await message.channel.send(f"✨ +20 XP | Total: {xp} | Level: {level}")
+            xp = add_xp(user_id, 20)
+            await message.channel.send(f"✨ +20 XP | Total: {xp}")
 
         # ✍️ IMPROVE
         elif content.startswith("!improve"):
-            title = "📝 Improvement"
+            title = "📝 Improved"
             text = content[9:].strip()
-            if not text:
-                await message.channel.send("❗ Please enter text.")
-                return
 
             async with message.channel.typing():
                 reply = ask_ai(f"Improve this to Grade 9:\n{text}")
 
-            xp = add_xp(message.author.id, 5)
-            level = xp // 100
-            await message.channel.send(f"✨ +5 XP | Total: {xp} | Level: {level}")
-
-        # 🧬 BIO
+        # SUBJECT MODES
         elif content.startswith("!bio"):
-            title = "🧬 Biology Help"
-            update_stats(message.author.id, "bio")
             topic = content[4:].strip()
-
-            if not topic:
-                await message.channel.send("❗ Please enter a topic.")
-                return
-
-            data = get_user_stats(message.author.id)
-
-            memory = ""
-            if data:
-                bio_count = data[2]
-                phy_count = data[3]
-                eng_count = data[4]
-
-                weakest = min(
-                    [("Biology", bio_count), ("Physics", phy_count), ("English", eng_count)],
-                    key=lambda x: x[1]
-                )[0]
-
-                memory = f"This student struggles most with {weakest}. Explain more clearly and simply."
-
             async with message.channel.typing():
-                reply = ask_ai(
-                    f"{memory}\n\nExplain this topic:\n{topic}",
-                    system_prompt="You are a GCSE Biology expert."
-                )
+                reply = ask_ai(topic, "You are a GCSE Biology expert.")
 
-        # ⚡ PHY
         elif content.startswith("!phy"):
-            title = "⚡️ Physics Help"
-            update_stats(message.author.id, "phy")
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(topic, system_prompt="You are a GCSE Physics expert.")
+                reply = ask_ai(topic, "You are a GCSE Physics expert.")
 
-        # 📖 ENG
         elif content.startswith("!eng"):
-            title = "📚 English Help"
-            update_stats(message.author.id, "eng")
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
+                reply = ask_ai(topic, "You are an AQA English examiner.")
 
-        elif content.startswith("!his"):
-            title = "🦖 History Help"
-            topic = content[4:].strip()
-            async with message.channel.typing():
-                reply = ask_ai(topic, system_prompt="You are an AQA Histroy expert.")
-
-        # 💬 CHAT
-        elif client.user in message.mentions:
-            async with message.channel.typing():
-                reply = ask_ai(content)
-
-        # 🏆 LEADERBOARD
+        # 🏆 leaderboard
         elif content.startswith("!leaderboard"):
-            top_users = get_leaderboard()
+            data = get_leaderboard()
+            text = "🏆 Top Students\n\n"
 
-            leaderboard = "🏆 **Top Students**\n\n"
-            for i, (user, xp) in enumerate(top_users):
-                leaderboard += f"{i+1}. <@{user}> — {xp} XP\n"
+            for i, (user, xp) in enumerate(data):
+                text += f"{i+1}. <@{user}> — {xp} XP\n"
 
-            await message.channel.send(leaderboard)
+            await message.channel.send(text)
             return
 
-        elif content.startswith("!profile"):
-            data = get_user_stats(message.author.id)
-
-            if data is None:
-                await message.channel.send("📊 No data yet. Start studying!")
-                return
-
-            total = data[1]
-            bio = data[2]
-            phy = data[3]
-            eng = data[4]
-
-            await message.channel.send(f"""
-        📊 **Your Study Profile**
-
-        Total answers: {total}
-
-        🧬 Biology: {bio}
-        ⚡ Physics: {phy}
-        📖 English: {eng}
-        """)
         else:
             return
 
-        # 📤 SEND RESPONSE (shared logic)
+        # SEND
         if not reply:
-            reply = "⚠️ AI returned no response. Try again."
-        print("DEBUG REPLY:", reply)
+            reply = "⚠️ No response."
+
+        print("DEBUG:", reply[:100])
         await send_embed(message, title, reply)
 
     except Exception as e:
@@ -344,7 +248,5 @@ async def on_message(message):
         traceback.print_exc()
 
 
-# 🚀 Run bot
+# 🚀 RUN
 client.run(DISCORD_TOKEN)
-
-
