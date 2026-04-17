@@ -1,4 +1,4 @@
-from database import add_xp, get_leaderboard, update_stats, get_user_stats
+from database import add_xp, get_leaderboard, update_stats, get_user_stats, get_weak_topics, update_topic
 import time
 last_used = {}
 import os
@@ -151,6 +151,8 @@ async def on_message(message):
             if weak_topics:
                 weakest_topic = weak_topics[0][0]
                 memory = f"This student struggles with {weakest_topic}. Focus the quiz on this topic."
+            else:
+                memory = ""
             if not topic:
                 await message.channel.send("❗ Please enter a topic.")
                 return
@@ -209,6 +211,7 @@ async def on_message(message):
 
                 if topic_line:
                     topic_name = topic_line.replace("Topic:", "").strip()
+                    update_topic(message.author.id, topic_name)
 
             xp = add_xp(message.author.id, 20)
             level = xp // 100
