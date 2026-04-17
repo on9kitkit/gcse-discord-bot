@@ -207,10 +207,10 @@ async def on_message(message):
                 """)
                 lines = reply.split("\n")
 
-                topic_line = next((l for l in lines if "Topic:" in l), None)
+                topic_line = next((l for l in lines if l.lower().startswith("topic:")), None)
 
                 if topic_line:
-                    topic_name = topic_line.replace("Topic:", "").strip()
+                    topic_name = topic_line.split(":")[-1].strip()
                     update_topic(message.author.id, topic_name)
 
             xp = add_xp(message.author.id, 20)
