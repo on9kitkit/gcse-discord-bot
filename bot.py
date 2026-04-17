@@ -187,7 +187,21 @@ async def on_message(message):
                 - Give an estimated mark
                 - Explain why
                 - Show how to improve
+                Also:
+                - Identify the topic this answer is about (e.g. forces, EM waves, structure in English)
+                - Identify ONE weakness in the answer
+                Format:
+                Topic: ...
+                Weakness: ...
+                Grade: ...
+                Feedback: ...
                 """)
+                lines = reply.split("\n")
+
+                topic_line = next((l for l in lines if "Topic:" in l), None)
+
+                if topic_line:
+                    topic_name = topic_line.replace("Topic:", "").strip()
 
             xp = add_xp(message.author.id, 20)
             level = xp // 100
