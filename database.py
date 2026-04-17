@@ -23,7 +23,15 @@ CREATE TABLE IF NOT EXISTS user_stats (
 """)
 
 conn.commit()
-
+#Weaknesses
+def update_topic(user_id, topic):
+    cursor.execute("""
+    INSERT INTO weak_topics (user_id, topic, count)
+    VALUES (?, ?, 1)
+    ON CONFLICT(user_id, topic)
+    DO UPDATE SET count = count + 1
+    """, (user_id, topic))
+    conn.commit()
 
 # 🎮 XP SYSTEM
 def add_xp(user_id, amount):
