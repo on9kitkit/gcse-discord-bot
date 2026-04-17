@@ -31,7 +31,7 @@ client = discord.Client(intents=intents)
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
     try:
         if system_prompt is None:
-            system_prompt = """You are an expert AQA GCSE tutor.
+            system_prompt = r"""You are an expert AQA GCSE tutor.
 
 ALWAYS:
 - Use bullet points
