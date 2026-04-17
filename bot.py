@@ -11,6 +11,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not OPENAI_API_KEY:
     raise ValueError("❌ OPENAI_API_KEY is missing")
+print("API KEY LOADED:", OPENAI_API_KEY[:10] if OPENAI_API_KEY else "NONE")
 
 # 🧠 OpenAI client
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
