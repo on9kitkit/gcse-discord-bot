@@ -9,6 +9,9 @@ from openai import OpenAI
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not OPENAI_API_KEY:
+    raise ValueError("❌ OPENAI_API_KEY is missing")
+
 # 🧠 OpenAI client
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -22,7 +25,9 @@ client = discord.Client(intents=intents)
 # 🤖 AI function
 def ask_ai(prompt, system_prompt=None, model="gpt-5.1"):
     if system_prompt is None:
-        system_prompt = """You are an expert AQA GCSE tutor AND examiner.
+        system_prompt = r"""You are an expert AQA GCSE tutor...
+        - Do NOT use LaTeX (no \cdot, \sin, etc.)
+        """
 
 ALWAYS:
 - Use bullet points
