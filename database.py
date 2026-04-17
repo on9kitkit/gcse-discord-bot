@@ -42,6 +42,15 @@ def update_topic(user_id, topic):
     """, (user_id, topic))
     conn.commit()
 
+def get_weak_topics(user_id):
+    cursor.execute("""
+    SELECT topic, count 
+    FROM weak_topics 
+    WHERE user_id=? 
+    ORDER BY count DESC
+    """, (user_id,))
+    return cursor.fetchall()
+
 # 🎮 XP SYSTEM
 def add_xp(user_id, amount):
     cursor.execute("SELECT xp FROM users WHERE user_id=?", (user_id,))
