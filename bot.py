@@ -14,7 +14,7 @@ if not OPENAI_API_KEY:
 print("API KEY LOADED:", OPENAI_API_KEY[:10] if OPENAI_API_KEY else "NONE")
 
 # 🧠 OpenAI client
-client_ai = OpenAI()
+client_ai = OpenAI(api_key=OPENAI_API_KEY)
 
 # ⚙️ Discord setup
 intents = discord.Intents.default()
@@ -24,10 +24,10 @@ client = discord.Client(intents=intents)
 # 🤖 AI function
 
 # 🤖 AI function
-def ask_ai(prompt, system_prompt=None, model="gpt-5.1"):
+def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
     if system_prompt is None:
         system_prompt = r"""You are an expert AQA GCSE tutor...
-        - Do NOT use LaTeX (no \cdot, \sin, etc.)
+        - Do NOT use LaTeX (no \\cdot, \sin, etc.)
 
         ALWAYS:
         - Use bullet points
