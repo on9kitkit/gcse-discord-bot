@@ -145,12 +145,19 @@ async def on_message(message):
         elif content.startswith("!quiz"):
             title = "❓ Quiz Time"
             topic = content[6:].strip()
+            weak_topics = get_weak_topics(message.author.id)
+
+            memory = ""
+            if weak_topics:
+                weakest_topic = weak_topics[0][0]
+                memory = f"This student struggles with {weakest_topic}. Focus the quiz on this topic."
             if not topic:
                 await message.channel.send("❗ Please enter a topic.")
                 return
 
             async with message.channel.typing():
                 reply = ask_ai(f"""
+                {memory}
                 The student asked: {topic}
 
                 Create a GCSE quiz based on their request.
