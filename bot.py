@@ -52,6 +52,7 @@ ALWAYS:
     try:
         return response.output[0].content[0].text
     except:
+        print("RAW RESPONSE:", response)
         return None
 
 # 🎨 EMBED
