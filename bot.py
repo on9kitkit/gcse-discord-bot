@@ -14,7 +14,7 @@ if not OPENAI_API_KEY:
 print("API KEY LOADED:", OPENAI_API_KEY[:10] if OPENAI_API_KEY else "NONE")
 
 # 🧠 OpenAI client
-client_ai = OpenAI(api_key=OPENAI_API_KEY)
+client_ai = OpenAI()
 
 # ⚙️ Discord setup
 intents = discord.Intents.default()
