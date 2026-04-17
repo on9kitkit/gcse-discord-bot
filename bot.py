@@ -20,7 +20,7 @@ client = discord.Client(intents=intents)
 # 🤖 AI function
 
 # 🤖 AI function
-def ask_ai(prompt, system_prompt=None):
+def ask_ai(prompt, system_prompt=None, model="gpt-5.1"):
     if system_prompt is None:
         system_prompt = """You are an expert AQA GCSE tutor AND examiner.
 
@@ -39,7 +39,7 @@ WHEN USING EQUATIONS:
 Keep answers concise but high quality."""
 
     response = client_ai.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
