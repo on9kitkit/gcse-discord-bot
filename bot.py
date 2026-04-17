@@ -29,9 +29,8 @@ client = discord.Client(intents=intents)
 
 # 🤖 AI FUNCTION
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
-    try:
-        if system_prompt is None:
-            system_prompt = r"""You are an expert AQA GCSE tutor.
+    if system_prompt is None:
+        system_prompt = r"""You are an expert AQA GCSE tutor...
 
 ALWAYS:
 - Use bullet points
@@ -39,29 +38,21 @@ ALWAYS:
 - Give clear explanations
 - Add an example
 - Include exam tips
+"""
 
-Use clean GCSE equations (NO LaTeX)."""
+    response = client_ai.responses.create(
+        model=model,
+        input=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        max_output_tokens=2000
+    )
 
-        response = client_ai.responses.create(
-            model=model,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            max_output_tokens=1500
-        )
-
-        text = response.output_text
-
-        if not text:
-            return "⚠️ AI returned empty response."
-
-        return text
-
-    except Exception as e:
-        print("❌ AI ERROR:", e)
-        return "⚠️ AI error occurred. Try again."
-
+    try:
+        return response.output[0].content[0].text
+    except:
+        return None
 
 # 🎨 EMBED
 def create_embed(title, description, color, message):
