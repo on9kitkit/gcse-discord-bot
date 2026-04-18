@@ -1,4 +1,137 @@
+chaichai
+chaichai3192
+Online
+
+
+
+
+
+Text Channel
+GCSE is calling:notes-resources
+Search GCSE is calling
+
+notes-resources chat
+Welcome to #notes-resources!
+This is the start of the #notes-resources channel. 
+
+Edit Channel
+12 April 2026
+
+chaichai — 12/04/2026, 23:49Sunday, 12 April 2026 at 23:49
+oringinal code:
+[23:52]Sunday, 12 April 2026 at 23:52
+import os
+import discord
+from openai import OpenAI
+
+# 🔑 Environment variables
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+
+Expand (147 lines)
+bot copy.py
+bot copy.py (5 KB)
+5 KB
+Change language
+View whole file
+More
+13 April 2026
+
+chaichai — 13/04/2026, 00:00Monday, 13 April 2026 at 00:00
+GitHub URL :
+[00:00]Monday, 13 April 2026 at 00:00
+https://github.com/on9kitkit/gcse-discord-bot
+GitHub
+GitHub - on9kitkit/gcse-discord-bot: GCSE helper
+GCSE helper. Contribute to on9kitkit/gcse-discord-bot development by creating an account on GitHub.
+
+
+1
+Add Reaction
+
+chaichai — 13/04/2026, 14:09Monday, 13 April 2026 at 14:09
+13/4/2026
+Improved code. + XP system, anti-spamming, database and more flexible "!quiz" command: (edited)Monday, 13 April 2026 at 22:16
+
+chaichai — 13/04/2026, 22:18Monday, 13 April 2026 at 22:18
+from database import add_xp, get_leaderboard, update_stats, get_user_stats
+import time
+last_used = {}
+import os
+import discord
+from openai import OpenAI
+
+Expand (267 lines)
+bot copy.py
+bot copy.py (8 KB)
+8 KB
+Change language
+View whole file
+More
+14 April 2026
+
+chaichai — 14/04/2026, 19:55Tuesday, 14 April 2026 at 19:55
+14/4/26
+[19:56]Tuesday, 14 April 2026 at 19:56
+Enhanced memory, fixed nonsense format when AI deal with Maths:
+[19:58]Tuesday, 14 April 2026 at 19:58
+from database import add_xp, get_leaderboard, update_stats, get_user_stats
+import time
+last_used = {}
+import os
+import discord
+from openai import OpenAI
+
+Expand (309 lines)
+bot copy.py
+bot copy.py (9 KB)
+9 KB
+Change language
+View whole file
+More
+:rainbow_flag:
+Click to react
+:eggplant:
+Click to react
+:cactus:
+Click to react
+Add Reaction
+Edit
+Forward
+More
+17 April 2026
+
+chaichai — Yesterday at 18:12Friday, 17 April 2026 at 18:12
+17/4/26
+[18:13]Friday, 17 April 2026 at 18:13
+Switched cloud AI model form gpt4o mini to gpt 5.1. Massive upgrade!
+
+4
+Add Reaction
+
+chaichai — Yesterday at 21:30Friday, 17 April 2026 at 21:30
+In addition, the code enhanced quiz command with weak topics memory + marking system
+
+chaichai — Yesterday at 22:04Friday, 17 April 2026 at 22:04
 from database import add_xp, get_leaderboard, update_stats, get_user_stats, get_weak_topics, update_topic
+import time
+last_used = {}
+import os
+import discord
+from openai import OpenAI
+
+Expand (340 lines)
+bot copy.py
+bot copy.py (11 KB)
+11 KB
+Change language
+View whole file
+More
+
+Message #notes-resources
+﻿
+Upgrade your friends! Gift them awesome chat perks with Nitro.
+Send GIF
+from database import add_xp, get_leaderboard, update_stats, get_user_stats
 import time
 last_used = {}
 import os
@@ -20,7 +153,7 @@ client = discord.Client(intents=intents)
 # 🤖 AI function
 
 # 🤖 AI function
-def ask_ai(prompt, system_prompt=None, model="gpt-5.1"):
+def ask_ai(prompt, system_prompt=None):
     if system_prompt is None:
         system_prompt = """You are an expert AQA GCSE tutor AND examiner.
 
@@ -39,8 +172,7 @@ WHEN USING EQUATIONS:
 Keep answers concise but high quality."""
 
     response = client_ai.chat.completions.create(
-        model=model,
-        max_completion_tokens=2000,
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
@@ -145,21 +277,12 @@ async def on_message(message):
         elif content.startswith("!quiz"):
             title = "❓ Quiz Time"
             topic = content[6:].strip()
-            weak_topics = get_weak_topics(message.author.id)
-
-            memory = ""
-            if weak_topics and ("weak" in topic.lower() or "improve" in topic.lower()):
-                weakest_topic = weak_topics[0][0]
-                memory = f"This student struggles with {weakest_topic}. Focus the quiz on this topic."
-            else:
-                memory = ""
             if not topic:
                 await message.channel.send("❗ Please enter a topic.")
                 return
 
             async with message.channel.typing():
                 reply = ask_ai(f"""
-                {memory}
                 The student asked: {topic}
 
                 Create a GCSE quiz based on their request.
@@ -167,7 +290,7 @@ async def on_message(message):
                 Rules:
                 - Adapt to their request (e.g. MC, long questions, number of questions)
                 - If unclear, default to mixed questions
-                - Do not show the answers
+                - Only show the answers at the end
                 """)
 
             xp = add_xp(message.author.id, 5)
@@ -196,22 +319,7 @@ async def on_message(message):
                 - Give an estimated mark
                 - Explain why
                 - Show how to improve
-                Also:
-                - Identify the topic this answer is about (e.g. forces, EM waves, structure in English)
-                - Identify ONE weakness in the answer
-                Format:
-                Topic: ...
-                Weakness: ...
-                Grade: ...
-                Feedback: ...
                 """)
-                lines = reply.split("\n")
-
-                topic_line = next((l for l in lines if l.lower().startswith("topic:")), None)
-
-                if topic_line:
-                    topic_name = topic_line.split(":")[-1].strip()
-                    update_topic(message.author.id, topic_name)
 
             xp = add_xp(message.author.id, 20)
             level = xp // 100
@@ -278,12 +386,6 @@ async def on_message(message):
             topic = content[4:].strip()
             async with message.channel.typing():
                 reply = ask_ai(topic, system_prompt="You are an AQA English examiner.")
-
-        elif content.startswith("!his"):
-            title = "🦖 History Help"
-            topic = content[4:].strip()
-            async with message.channel.typing():
-                reply = ask_ai(topic, system_prompt="You are an AQA Histroy expert.")
 
         # 💬 CHAT
         elif client.user in message.mentions:
