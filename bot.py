@@ -30,30 +30,19 @@ client = discord.Client(intents=intents)
 
 # 🤖 AI FUNCTION (SAFE VERSION)
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
-    try:
-        if system_prompt is None:
-            system_prompt = """You are an expert GCSE tutor.
+    if system_prompt is None:
+        system_prompt = "You are a GCSE tutor."
 
-- Use bullet points
-- Include key terms
-- Give clear explanations
-- Add examples
-"""
+    response = client_ai.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=1500
+    )
 
-        response = client_ai.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=1500
-        )
-
-        return response.choices[0].message.content
-
-    except Exception as e:
-        print("❌ AI ERROR:", e)
-        return "⚠️ AI failed. Try again."
+    return response.choices[0].message.content
 
 # 🎨 EMBED UI
 def create_embed(title, description, message):
