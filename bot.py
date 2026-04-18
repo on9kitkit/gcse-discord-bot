@@ -88,14 +88,6 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-
-    # =========================
-    # CHANNEL RESTRICTION
-    # =========================
-    ALLOWED_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
-
-    if message.channel.id != ALLOWED_CHANNEL_ID:
-        return
     content = message.content.strip()
 
     # HELP
@@ -138,16 +130,34 @@ Question:
 Student answer:
 {content}
 
-Mark this answer briefly and give feedback.
+Mark this answer.
+
+Give:
+- Score: x/1
+- Brief feedback
+
+Be strict like an examiner.
 """)
 
         await send_embed(message, "📝 Feedback", feedback)
-
+        # extract score
+        for line in feedback.split("\n"):
+            if "score" in line.lower():
+                try:
+                    score = int(line.split(":")[1].split("/")[0].strip())
+                    session["score"] += score
+                except:
+                    pass
         session["current"] += 1
 
         if session["current"] >= len(session["questions"]):
             del quiz_sessions[user_id]
-            await message.channel.send("🎉 Quiz complete!")
+            score = session["score"]
+            total = session["total"]
+
+            await message.channel.send(
+                f"🎉 Quiz complete!\n\nScore: {score}/{total}"
+            )
         else:
             next_q = session["questions"][session["current"]]
             await send_embed(message, "➡️ Next Question", next_q)
@@ -236,7 +246,9 @@ Question:
                 "questions": questions,
                 "current": 0,
                 "topic": topic,
-                "channel_id": message.channel.id
+                "channel_id": message.channel.id,
+                "score": 0,
+                "total": len(questions)
             }
 
             await send_embed(message, "❓ Quiz Started", questions[0])
