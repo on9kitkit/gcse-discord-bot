@@ -38,8 +38,7 @@ quiz_sessions = {}
 # VECTOR MEMORY (GLOBAL)
 # =========================
 dimension = 1536
-index = faiss.IndexFlatL2(dimension)
-memory_texts = []
+user_memory = {}
 # =========================
 # EMBEDDING + MEMORY
 # =========================
@@ -50,22 +49,31 @@ def get_embedding(text):
     )
     return response.data[0].embedding
 
-def store_memory(text):
-    emb = get_embedding(text)
-    index.add(np.array([emb]).astype("float32"))
-    memory_texts.append(text)
+def store_memory(user_id, text):
+    if user_id not in user_memory:
+        user_memory[user_id] = {
+            "index": faiss.IndexFlatL2(dimension),
+            "texts": []
+        }
 
-def search_memory(query, k=3):
-    if len(memory_texts) == 0:
+    emb = get_embedding(text)
+    user_memory[user_id]["index"].add(np.array([emb]).astype("float32"))
+    user_memory[user_id]["texts"].append(text)
+
+def search_memory(user_id, query, k=3):
+    if user_id not in user_memory or len(user_memory[user_id]["texts"]) == 0:
         return []
 
     emb = get_embedding(query)
+    index = user_memory[user_id]["index"]
+    texts = user_memory[user_id]["texts"]
+
     D, I = index.search(np.array([emb]).astype("float32"), k)
 
     results = []
     for i in I[0]:
-        if i < len(memory_texts):
-            results.append(memory_texts[i])
+        if i < len(texts):
+            results.append(texts[i])
 
     return results
 
@@ -75,7 +83,7 @@ def search_memory(query, k=3):
 def ask_ai(user_id, prompt):
     try:
         # retrieve relevant memory
-        relevant = search_memory(prompt)
+        relevant = search_memory(user_id, prompt)
         context = "\n".join(relevant)
 
         response = client_ai.responses.create(
@@ -99,8 +107,8 @@ User:
             reply = "⚠️ AI returned no readable text."
 
         # store interaction
-        store_memory(prompt)
-        store_memory(reply)
+        store_memory(user_id, prompt)
+        store_memory(user_id, reply)
 
         return reply
 
