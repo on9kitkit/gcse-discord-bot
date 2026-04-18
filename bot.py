@@ -2,6 +2,7 @@ import discord
 import os
 import time
 from openai import OpenAI
+print("🚀 VERSION 1.0 CLEAN BUILD")
 
 # =========================
 # ENV VARIABLES
