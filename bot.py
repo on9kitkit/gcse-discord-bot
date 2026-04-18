@@ -122,10 +122,11 @@ async def on_message(message):
     # QUIZ ANSWERING (PRIORITY)
     # =========================
     if user_id in quiz_sessions:
+        session = quiz_sessions[user_id]
+
         # ensure quiz continues only in same channel
         if message.channel.id != session["channel_id"]:
             return
-        session = quiz_sessions[user_id]
 
         current_q = session["questions"][session["current"]]
 
@@ -234,7 +235,7 @@ Question:
             quiz_sessions[user_id] = {
                 "questions": questions,
                 "current": 0,
-                "topic": topic
+                "topic": topic,
                 "channel_id": message.channel.id
             }
 
