@@ -40,7 +40,7 @@ Keep answers concise but high quality."""
 
     response = client_ai.chat.completions.create(
         model=model,
-        max_tokens=2000,
+        max_completion_tokens=2000,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
