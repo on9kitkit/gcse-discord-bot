@@ -1,3 +1,5 @@
+import faiss
+import numpy as np
 import discord
 import os
 import time
@@ -33,21 +35,74 @@ last_used = {}
 quiz_sessions = {}
 
 # =========================
+# VECTOR MEMORY (GLOBAL)
+# =========================
+dimension = 1536
+index = faiss.IndexFlatL2(dimension)
+memory_texts = []
+# =========================
+# EMBEDDING + MEMORY
+# =========================
+def get_embedding(text):
+    response = client_ai.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
+    return response.data[0].embedding
+
+def store_memory(text):
+    emb = get_embedding(text)
+    index.add(np.array([emb]).astype("float32"))
+    memory_texts.append(text)
+
+def search_memory(query, k=3):
+    if len(memory_texts) == 0:
+        return []
+
+    emb = get_embedding(query)
+    D, I = index.search(np.array([emb]).astype("float32"), k)
+
+    results = []
+    for i in I[0]:
+        if i < len(memory_texts):
+            results.append(memory_texts[i])
+
+    return results
+
+# =========================
 # AI FUNCTION (SAFE)
 # =========================
 def ask_ai(user_id, prompt):
     try:
+        # retrieve relevant memory
+        relevant = search_memory(prompt)
+        context = "\n".join(relevant)
+
         response = client_ai.responses.create(
-            model="gpt-5.4",
-            input=prompt,
+            model="gpt-5.1",
+            input=f"""
+Context (past learning):
+{context}
+
+User:
+{prompt}
+""",
             max_output_tokens=2000
         )
 
         print("FULL RESPONSE:", response)
 
         # SAFE extraction
-        if hasattr(response, "output_text") and response.output_text:
-            return response.output_text
+        reply = response.output_text if hasattr(response, "output_text") else None
+
+        if not reply:
+            reply = "⚠️ AI returned no readable text."
+
+        # store interaction
+        store_memory(prompt)
+        store_memory(reply)
+
+        return reply
 
         # fallback (VERY IMPORTANT)
         if response.output and len(response.output) > 0:
@@ -134,7 +189,7 @@ Mark this answer.
 
 Give:
 - Score: x/any (depend on context)
-- Brief feedback if answer is correct, detailed explaination if answer has flaws)
+- Brief feedback if the answer is correct, detailed otherwise
 
 Be strict like an examiner.
 """)
