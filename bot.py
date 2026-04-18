@@ -34,7 +34,31 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
     print("PROMPT:", prompt[:200])
 
     if system_prompt is None:
-        system_prompt = "You are a GCSE tutor."
+        system_prompt = r"""You are an expert AQA GCSE tutor AND examiner.
+
+    RULES:
+    - Use bullet points
+    - Be clear and structured
+    - Use simple GCSE-level explanations
+    - Include key terms
+    - Add examples when helpful
+    - Keep answers concise but high quality
+
+    FOR QUIZZES:
+    - Follow the user’s request exactly
+    - If unclear → use mixed difficulty (1–6 markers)
+    - NEVER include answers unless explicitly asked
+
+    FOR MARKING:
+    - Give grade (1–9)
+    - Explain WHY
+    - Show how to improve
+
+    FORMAT:
+    - Clean layout
+    - No messy symbols
+    - No LaTeX
+    """
 
     response = client_ai.chat.completions.create(
         model=model,
@@ -42,12 +66,21 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=500
+        max_completion_tokens=500
     )
 
     print("RAW RESPONSE:", response)
 
-    return response.choices[0].message.content
+    if not response.choices:
+        return "⚠️ No AI response."
+
+    message = response.choices[0].message
+
+    if not message or not message.content:
+        return "⚠️ Empty AI response."
+    print("CHOICES:", response.choices)
+    return message.content
+    
 # 🎨 EMBED UI
 def create_embed(title, description, message):
     embed = discord.Embed(
