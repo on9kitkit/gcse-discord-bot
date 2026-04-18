@@ -38,7 +38,7 @@ quiz_sessions = {}
 def ask_ai(prompt):
     try:
         response = client_ai.responses.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4",
             input=prompt,
             max_output_tokens=500
         )
