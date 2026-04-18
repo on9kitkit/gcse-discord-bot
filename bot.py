@@ -89,6 +89,13 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    # =========================
+    # CHANNEL RESTRICTION
+    # =========================
+    ALLOWED_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+
+    if message.channel.id != ALLOWED_CHANNEL_ID:
+        return
     content = message.content.strip()
 
     # HELP
@@ -115,6 +122,9 @@ async def on_message(message):
     # QUIZ ANSWERING (PRIORITY)
     # =========================
     if user_id in quiz_sessions:
+        # ensure quiz continues only in same channel
+        if message.channel.id != session["channel_id"]:
+            return
         session = quiz_sessions[user_id]
 
         current_q = session["questions"][session["current"]]
@@ -225,6 +235,7 @@ Question:
                 "questions": questions,
                 "current": 0,
                 "topic": topic
+                "channel_id": message.channel.id
             }
 
             await send_embed(message, "❓ Quiz Started", questions[0])
