@@ -32,36 +32,28 @@ client = discord.Client(intents=intents)
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
     try:
         if system_prompt is None:
-            system_prompt = """You are an expert AQA GCSE tutor.
+            system_prompt = """You are an expert GCSE tutor.
 
 - Use bullet points
 - Include key terms
 - Give clear explanations
-- Add an example
-- Include exam tips
-- Use simple equations like F = ma (NO LaTeX)
+- Add examples
 """
 
-        response = client_ai.responses.create(
+        response = client_ai.chat.completions.create(
             model=model,
-            input=[
+            messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            max_output_tokens=1500
+            max_tokens=1500
         )
 
-        # ✅ SAFE extraction (no more empty replies)
-        if hasattr(response, "output_text") and response.output_text:
-            return response.output_text
-
-        # fallback
-        return response.output[0].content[0].text
+        return response.choices[0].message.content
 
     except Exception as e:
         print("❌ AI ERROR:", e)
         return "⚠️ AI failed. Try again."
-
 
 # 🎨 EMBED UI
 def create_embed(title, description, message):
