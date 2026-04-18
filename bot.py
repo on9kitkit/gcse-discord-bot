@@ -2,6 +2,7 @@ import discord
 import os
 import time
 from openai import OpenAI
+from database import add_xp, update_topic
 print("🚀 VERSION 1.0 CLEAN BUILD")
 
 # =========================
@@ -29,6 +30,7 @@ client = discord.Client(intents=intents)
 
 # cooldown
 last_used = {}
+quiz_sessions = {}
 
 # =========================
 # AI FUNCTION (SAFE)
@@ -109,6 +111,37 @@ async def on_message(message):
         return
 
     last_used[user_id] = now
+    # =========================
+    # QUIZ ANSWERING (PRIORITY)
+    # =========================
+    if user_id in quiz_sessions:
+        session = quiz_sessions[user_id]
+
+        current_q = session["questions"][session["current"]]
+
+        async with message.channel.typing():
+            feedback = ask_ai(f"""
+Question:
+{current_q}
+
+Student answer:
+{content}
+
+Mark this answer briefly and give feedback.
+""")
+
+        await send_embed(message, "📝 Feedback", feedback)
+
+        session["current"] += 1
+
+        if session["current"] >= len(session["questions"]):
+            del quiz_sessions[user_id]
+            await message.channel.send("🎉 Quiz complete!")
+        else:
+            next_q = session["questions"][session["current"]]
+            await send_embed(message, "➡️ Next Question", next_q)
+
+        return
 
     try:
         reply = None
@@ -149,17 +182,47 @@ Question:
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"""
-Create a GCSE quiz.
+                quiz_text = ask_ai(f"""
+        Create a GCSE quiz.
 
-Topic: {topic}
+        Topic: {topic}
 
-Rules:
-- Mix of 1–6 mark questions
-- Exam-style questions
-- NO answers included
-""")
+        Rules:
+        - 5 questions
+        - Mix of difficulty (1–6 markers)
+        - Do NOT include answers
+        - Number them clearly (Q1, Q2, ...)
+        """)
 
+            # split into questions
+            # improved parsing (robust)
+            lines = quiz_text.split("\n")
+            questions = []
+            current_q = ""
+
+            for line in lines:
+                line = line.strip()
+
+                if line.lower().startswith("q") and ":" in line:
+                    if current_q:
+                        questions.append(current_q.strip())
+                    current_q = line
+                else:
+                    current_q += "\n" + line
+
+            if current_q:
+                questions.append(current_q.strip())
+
+            quiz_sessions[user_id] = {
+                "questions": questions,
+                "current": 0,
+                "topic": topic
+            }
+
+            await send_embed(message, "❓ Quiz Started", questions[0])
+            xp = add_xp(user_id, 5)
+            await message.channel.send(f"✨ +5 XP | Total: {xp}")
+            return
         # =========================
         # MARK
         # =========================
@@ -181,8 +244,18 @@ Give:
 - Grade (1–9)
 - Feedback
 - How to improve
-""")
 
+Also include:
+Topic: ...
+""")
+            # extract topic from AI response
+            topic_name = None
+            for line in reply.split("\n"):
+                if line.lower().startswith("topic:"):
+                    topic_name = line.split(":")[-1].strip()
+
+            if topic_name:
+                update_topic(user_id, topic_name)
         else:
             return
 
