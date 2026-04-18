@@ -133,8 +133,8 @@ Student answer:
 Mark this answer.
 
 Give:
-- Score: x/1
-- Brief feedback
+- Score: x/any (depend on context)
+- Brief feedback if answer is correct, detailed explaination if answer has flaws)
 
 Be strict like an examiner.
 """)
