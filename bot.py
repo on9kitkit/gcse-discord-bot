@@ -183,16 +183,23 @@ Question:
 
             async with message.channel.typing():
                 quiz_text = ask_ai(f"""
-        Create a GCSE quiz.
+                Create a GCSE quiz.
 
-        Topic: {topic}
+                Topic: {topic}
 
-        Rules:
-        - 5 questions
-        - Mix of difficulty (1–6 markers)
-        - Do NOT include answers
-        - Number them clearly (Q1, Q2, ...)
-        """)
+                Rules:
+                - EXACTLY 5 questions
+                - Format EXACTLY like this:
+
+                Q1: ...
+                Q2: ...
+                Q3: ...
+                Q4: ...
+                Q5: ...
+
+                - Do NOT include answers
+                - No extra text
+                """)
 
             # split into questions
             # improved parsing (robust)
@@ -203,7 +210,8 @@ Question:
             for line in lines:
                 line = line.strip()
 
-                if line.lower().startswith("q") and ":" in line:
+                # detect new question (more flexible)
+                if line.lower().startswith("q"):
                     if current_q:
                         questions.append(current_q.strip())
                     current_q = line
