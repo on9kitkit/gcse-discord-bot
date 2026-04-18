@@ -35,7 +35,7 @@ quiz_sessions = {}
 # =========================
 # AI FUNCTION (SAFE)
 # =========================
-def ask_ai(prompt):
+def ask_ai(user_id, prompt):
     try:
         response = client_ai.responses.create(
             model="gpt-5.4",
@@ -123,7 +123,7 @@ async def on_message(message):
         current_q = session["questions"][session["current"]]
 
         async with message.channel.typing():
-            feedback = ask_ai(f"""
+            feedback = ask_ai(user_id, f"""
 Question:
 {current_q}
 
@@ -179,7 +179,7 @@ Be strict like an examiner.
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are a GCSE tutor.
 
 Explain clearly using:
@@ -203,7 +203,7 @@ Question:
                 return
 
             async with message.channel.typing():
-                quiz_text = ask_ai(f"""
+                quiz_text = ask_ai(user_id, f"""
                 Create a GCSE quiz.
 
                 Topic: {topic}
@@ -267,7 +267,7 @@ Question:
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 Mark this GCSE answer:
 
 {answer}
@@ -293,7 +293,7 @@ Topic: ...
             title = "📖 English Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are an AQA GCSE English Language examiner.
 
 Explain clearly using:
@@ -309,7 +309,7 @@ Topic:
             title = "📚 Literature Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are an AQA GCSE English Literature examiner.
 
 Explain with:
@@ -325,7 +325,7 @@ Topic:
             title = "⚡ Physics Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are a GCSE Physics expert.
 
 Explain using:
@@ -341,7 +341,7 @@ Topic:
             title = "🧪 Chemistry Help"
             topic = content[5:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are a GCSE Chemistry expert.
 
 Explain using:
@@ -357,7 +357,7 @@ Topic:
             title = "🧬 Biology Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are a GCSE Biology expert.
 
 Explain using:
@@ -373,7 +373,7 @@ Topic:
             title = "➗ Maths Help"
             topic = content[5:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are a GCSE Maths tutor.
 
 Explain step-by-step:
@@ -389,7 +389,7 @@ Question:
             title = "🏛️ History Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(f"""
+                reply = ask_ai(user_id, f"""
 You are an AQA GCSE History examiner.
 
 Explain using:
