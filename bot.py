@@ -30,6 +30,9 @@ client = discord.Client(intents=intents)
 
 # 🤖 AI FUNCTION (SAFE VERSION)
 def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
+    print("=== DEBUG START ===")
+    print("PROMPT:", prompt[:200])
+
     if system_prompt is None:
         system_prompt = "You are a GCSE tutor."
 
@@ -39,11 +42,12 @@ def ask_ai(prompt, system_prompt=None, model="gpt-4o-mini"):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=1500
+        max_tokens=500
     )
 
-    return response.choices[0].message.content
+    print("RAW RESPONSE:", response)
 
+    return response.choices[0].message.content
 # 🎨 EMBED UI
 def create_embed(title, description, message):
     embed = discord.Embed(
