@@ -37,7 +37,7 @@ def ask_ai(prompt):
         response = client_ai.responses.create(
             model="gpt-4o-mini",
             input=prompt,
-            max_output_tokens=500
+            max_completion_tokens=500
         )
 
         return response.output_text or "⚠️ Empty AI response."
