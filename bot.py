@@ -40,7 +40,7 @@ def ask_ai(user_id, prompt):
         response = client_ai.responses.create(
             model="gpt-5.4",
             input=prompt,
-            max_output_tokens=500
+            max_output_tokens=2000
         )
 
         print("FULL RESPONSE:", response)
