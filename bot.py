@@ -40,12 +40,25 @@ def ask_ai(prompt):
             max_completion_tokens=500
         )
 
-        return response.output_text or "⚠️ Empty AI response."
+        print("FULL RESPONSE:", response)
+
+        # SAFE extraction
+        if hasattr(response, "output_text") and response.output_text:
+            return response.output_text
+
+        # fallback (VERY IMPORTANT)
+        if response.output and len(response.output) > 0:
+            for item in response.output:
+                if hasattr(item, "content"):
+                    for content in item.content:
+                        if hasattr(content, "text"):
+                            return content.text
+
+        return "⚠️ AI returned no readable text."
 
     except Exception as e:
         print("AI ERROR:", e)
         return "❌ AI failed. Check logs."
-
 # =========================
 # EMBED
 # =========================
