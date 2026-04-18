@@ -288,6 +288,119 @@ Topic: ...
 
             if topic_name:
                 update_topic(user_id, topic_name)
+
+        elif content.startswith("!eng"):
+            title = "📖 English Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are an AQA GCSE English Language examiner.
+
+Explain clearly using:
+- terminology (e.g. structure, language devices)
+- short examples
+- exam-style advice
+
+Topic:
+{topic}
+""")
+
+        elif content.startswith("!lit"):
+            title = "📚 Literature Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are an AQA GCSE English Literature examiner.
+
+Explain with:
+- key quotes
+- analysis (AO1, AO2 style)
+- context if relevant
+
+Topic:
+{topic}
+""")
+
+        elif content.startswith("!phy"):
+            title = "⚡ Physics Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are a GCSE Physics expert.
+
+Explain using:
+- bullet points
+- equations (plain text)
+- real-world examples
+
+Topic:
+{topic}
+""")
+
+        elif content.startswith("!chem"):
+            title = "🧪 Chemistry Help"
+            topic = content[5:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are a GCSE Chemistry expert.
+
+Explain using:
+- key terms
+- equations (plain text)
+- step-by-step processes
+
+Topic:
+{topic}
+""")
+
+        elif content.startswith("!bio"):
+            title = "🧬 Biology Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are a GCSE Biology expert.
+
+Explain using:
+- key terminology
+- processes clearly
+- examples
+
+Topic:
+{topic}
+""")
+
+        elif content.startswith("!math"):
+            title = "➗ Maths Help"
+            topic = content[5:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are a GCSE Maths tutor.
+
+Explain step-by-step:
+- show working
+- explain each step
+- keep it simple
+
+Question:
+{topic}
+""")
+
+        elif content.startswith("!his"):
+            title = "🏛️ History Help"
+            topic = content[4:].strip()
+            async with message.channel.typing():
+                reply = ask_ai(f"""
+You are an AQA GCSE History examiner.
+
+Explain using:
+- key events
+- causes and consequences
+- clear timeline
+
+Topic:
+{topic}
+""")
+
         else:
             return
 
