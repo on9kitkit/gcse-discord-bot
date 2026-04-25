@@ -87,7 +87,7 @@ def ask_ai(user_id, prompt):
         context = "\n".join(relevant)
 
         response = client_ai.responses.create(
-            model="gpt-5.4",
+            model="gpt-5.5",
             input=f"""
 Context (past learning):
 {context}
