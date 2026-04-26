@@ -95,7 +95,7 @@ Context (past learning):
 User:
 {prompt}
 """,
-            max_output_tokens=2000
+            max_output_tokens=3000
         )
 
         print("FULL RESPONSE:", response)
