@@ -38,7 +38,7 @@ quiz_sessions = {}
 # VECTOR MEMORY (GLOBAL)
 # =========================
 dimension = 1536
-user_memory = {}
+user_memory = {}  # {guild_id: {user_id: {index, texts}}}
 # =========================
 # EMBEDDING + MEMORY
 # =========================
@@ -49,24 +49,31 @@ def get_embedding(text):
     )
     return response.data[0].embedding
 
-def store_memory(user_id, text):
-    if user_id not in user_memory:
-        user_memory[user_id] = {
+def store_memory(guild_id, user_id, text):
+    if guild_id not in user_memory:
+        user_memory[guild_id] = {}
+
+    if user_id not in user_memory[guild_id]:
+        user_memory[guild_id][user_id] = {
             "index": faiss.IndexFlatL2(dimension),
             "texts": []
         }
 
     emb = get_embedding(text)
-    user_memory[user_id]["index"].add(np.array([emb]).astype("float32"))
-    user_memory[user_id]["texts"].append(text)
+    user_memory[guild_id][user_id]["index"].add(np.array([emb]).astype("float32"))
+    user_memory[guild_id][user_id]["texts"].append(text)
 
-def search_memory(user_id, query, k=3):
-    if user_id not in user_memory or len(user_memory[user_id]["texts"]) == 0:
+def search_memory(guild_id, user_id, query, k=3):
+    if (
+        guild_id not in user_memory or
+        user_id not in user_memory[guild_id] or
+        len(user_memory[guild_id][user_id]["texts"]) == 0
+    ):
         return []
 
     emb = get_embedding(query)
-    index = user_memory[user_id]["index"]
-    texts = user_memory[user_id]["texts"]
+    index = user_memory[guild_id][user_id]["index"]
+    texts = user_memory[guild_id][user_id]["texts"]
 
     D, I = index.search(np.array([emb]).astype("float32"), k)
 
@@ -80,14 +87,14 @@ def search_memory(user_id, query, k=3):
 # =========================
 # AI FUNCTION (SAFE)
 # =========================
-def ask_ai(user_id, prompt):
+def ask_ai(guild_id, user_id, prompt):
     try:
         # retrieve relevant memory
-        relevant = search_memory(user_id, prompt)
+        relevant = search_memory(guild_id, user_id, prompt)
         context = "\n".join(relevant)
 
         response = client_ai.responses.create(
-            model="gpt-5.5",
+            model="gpt-5.1",
             input=f"""
 Context (past learning):
 {context}
@@ -95,7 +102,7 @@ Context (past learning):
 User:
 {prompt}
 """,
-            max_output_tokens=3000
+            max_output_tokens=2000
         )
 
         print("FULL RESPONSE:", response)
@@ -107,8 +114,8 @@ User:
             reply = "⚠️ AI returned no readable text."
 
         # store interaction
-        store_memory(user_id, prompt)
-        store_memory(user_id, reply)
+        store_memory(guild_id, user_id, prompt)
+        store_memory(guild_id, user_id, reply)
 
         return reply
 
@@ -186,7 +193,7 @@ async def on_message(message):
         current_q = session["questions"][session["current"]]
 
         async with message.channel.typing():
-            feedback = ask_ai(user_id, f"""
+            feedback = ask_ai(message.guild.id, user_id, f"""
 Question:
 {current_q}
 
@@ -242,7 +249,7 @@ Be strict like an examiner.
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are a GCSE tutor.
 
 Explain clearly using:
@@ -266,7 +273,7 @@ Question:
                 return
 
             async with message.channel.typing():
-                quiz_text = ask_ai(user_id, f"""
+                quiz_text = ask_ai(message.guild.id, user_id, f"""
                 Create a GCSE quiz.
 
                 Topic: {topic}
@@ -330,7 +337,7 @@ Question:
                 return
 
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 Mark this GCSE answer:
 
 {answer}
@@ -356,7 +363,7 @@ Topic: ...
             title = "📖 English Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are an AQA GCSE English Language examiner.
 
 Explain clearly using:
@@ -372,7 +379,7 @@ Topic:
             title = "📚 Literature Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are an AQA GCSE English Literature examiner.
 
 Explain with:
@@ -388,7 +395,7 @@ Topic:
             title = "⚡ Physics Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are a GCSE Physics expert.
 
 Explain using:
@@ -404,7 +411,7 @@ Topic:
             title = "🧪 Chemistry Help"
             topic = content[5:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are a GCSE Chemistry expert.
 
 Explain using:
@@ -420,7 +427,7 @@ Topic:
             title = "🧬 Biology Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are a GCSE Biology expert.
 
 Explain using:
@@ -432,11 +439,12 @@ Topic:
 {topic}
 """)
 
+
         elif content.startswith("!math"):
             title = "➗ Maths Help"
             topic = content[5:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are a GCSE Maths tutor.
 
 Explain step-by-step:
@@ -452,7 +460,7 @@ Question:
             title = "🏛️ History Help"
             topic = content[4:].strip()
             async with message.channel.typing():
-                reply = ask_ai(user_id, f"""
+                reply = ask_ai(message.guild.id, user_id, f"""
 You are an AQA GCSE History examiner.
 
 Explain using:
